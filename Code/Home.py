@@ -7,9 +7,9 @@ import time
 Px = random.randint(1, 20)
 Cx = random.randint(1, 20)
 Policy = random.randint(1, 3)
-#1 = donne toujours
-#2 = vend toujours
-#3 = essaie de donner, vend sinon
+# 1 = donne toujours
+# 2 = vend toujours
+# 3 = essaie de donner, vend sinon
 
 
 def giver(Q):
@@ -20,6 +20,7 @@ def giver(Q):
     else:
         print("Je ne fais rien.")
 
+
 def seller(Q):
     if Q > 0:
         print("Je vends au market",Q,"Energie !")
@@ -27,6 +28,7 @@ def seller(Q):
         print("J'achète au market",Q,"Energie !")
     else:
         print("Je ne fais rien.")
+
 
 def middle(Q):
     if Q > 0:

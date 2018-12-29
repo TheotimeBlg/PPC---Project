@@ -3,14 +3,11 @@ import time
 from multiprocessing import Process, Queue, Array
 
 
-
-
 class Home(Process):
     def __init__(self):
-        print("Starting process :", Process.name)
         super().__init__()
-        self.Px = random.randint(1, 20)
-        self.Cx = random.randint(1, 20)
+        self.Px = 0
+        self.Cx = 0
         self.Policy = random.randint(1, 3)
         print("Je suis de type", self.Policy)
 
@@ -24,10 +21,20 @@ class Home(Process):
 
     def achete(self, Q):
         try:
-            print("J'essaie d'avoir de l'energie gratuite mdr")
-            HomesQueue.get(True, 1)
-            print("Yes ")
-        except :
+            print("J'essaie d'avoir de l'energie gratuite")
+            don = int(HomesQueue.get(True, 2))
+
+            if don > Q:
+                self.donne(don-Q)
+                print("J'ai pris", Q, "Energie et j'ai remis", don-Q, "Energie dans la queue")
+            elif don < Q:
+                self.achete(Q-don)
+                print("J'ai pris", Q, "Energie, mais ça ne suffit pas ! Il me manque", Q-don, "Energie.")
+            else:
+                print("J'ai pris", Q, "Energie dans la file ! Merci <3")
+
+        except Exception as e:
+            print(e)
             print("No givers !")
             print("J'achète au market", Q, "Energie !")
 
@@ -49,9 +56,10 @@ class Home(Process):
 
     def middle(self, Q):
         if Q > 0:
-            if HomesQueue.empty:
+            if HomesQueue.empty():
+                print("il n'y a pas de dons en cours")
                 self.donne(Q)
-            else :
+            else:
                 print("Pas besoin de donner, il y a déjà des dons en cours !")
                 self.vend(Q)
         elif Q < 0:
@@ -66,20 +74,22 @@ class Home(Process):
     }
 
     def run(self):
+        self.Px = random.randint(1, 20)
+        self.Cx = random.randint(1, 20)
         Q = self.Px - self.Cx
+        print(Q)
 
         func = self.switcher.get(self.Policy, "")
         func(self, Q)
 
 
 class Weather(Process):
-    def __init__(self, WeatherTab):
-        print("Starting process Weather")
+    def __init__(self):
         super().__init__()
 
     def run(self):
-        WeatherTab[0] = random.randint(-10,40)
-        WeatherTab[1] = random.randint(1,3)
+        WeatherTab[0] = random.randrange(-10, 40)
+        WeatherTab[1] = random.randint(1, 3)
 
 
 if __name__ == "__main__":
@@ -87,16 +97,22 @@ if __name__ == "__main__":
     HomesQueue = Queue()
     WeatherTab = Array('i', range(2))
 
-    Meteo = Weather(WeatherTab)
+    meteo = Weather()
 
     maison1 = Home()
     maison2 = Home()
 
+    meteo.start()
     maison1.start()
     maison2.start()
 
-    for i in range(0, 10):
+    time.sleep(3)
+
+    for i in range(0, 4):
+        print("")
         print("Début du jour ",i,"---------------------------------------------------")
+        meteo.run()
+        print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1])
         maison1.run()
         maison2.run()
 
