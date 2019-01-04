@@ -1,7 +1,12 @@
 import random
 import time
-from multiprocessing import Process, Queue, Array
+import math
+from multiprocessing import Process, Queue, Array, Value
 
+global  Pt #prix à l'instant t
+global  fi #contribution à l'instant t de la météo
+global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
+global  Beta #coefficient de modulation des evenements exterieurs
 
 class Home(Process):
     def __init__(self):
@@ -83,26 +88,36 @@ class Home(Process):
         func(self, Q)
 
 
-class Weather(Process):
-    def __init__(self):
-        super().__init__()
+def runWeather(WeatherTab, iteration):
+    #Récupération des anciennes valeurs de WeatherTab avant modification
+    t= WeatherTab[0]
+    alpha = random.randrange(-4, 4)
+    iteration.value= iteration.value +1
+    T= (math.cos(iteration.value)*t*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
+    print("temparature=",T)
+    WeatherTab[0] = int(T)
+    if (T<0) :
+        WeatherTab[1] = random.randint(1, 3) #1 : Soleil    2 : Nuage    3 : Neige
+    else :
+        WeatherTab[1] = random.randint(1, 2)    #il ne peut pas neiger si T>0°
 
-    def run(self):
-        WeatherTab[0] = random.randrange(-10, 40)
-        WeatherTab[1] = random.randint(1, 3)
 
 
 if __name__ == "__main__":
 
     HomesQueue = Queue()
     WeatherTab = Array('i', range(2))
+    iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
 
-    meteo = Weather()
+    #initialisation
+    WeatherTab[0]=21
+
 
     maison1 = Home()
     maison2 = Home()
 
-    meteo.start()
+
+
     maison1.start()
     maison2.start()
 
@@ -111,7 +126,9 @@ if __name__ == "__main__":
     for i in range(0, 4):
         print("")
         print("Début du jour ",i,"---------------------------------------------------")
-        meteo.run()
+        meteo = Process(target=runWeather, args=(WeatherTab, iteration))
+        meteo.start()
+        meteo.join()
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1])
         maison1.run()
         maison2.run()
