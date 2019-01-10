@@ -1,4 +1,5 @@
 import random
+import random
 import time
 import math
 from multiprocessing import Process, Queue, Array, Value
@@ -90,17 +91,16 @@ class Home(Process):
 
 def runWeather(WeatherTab, iteration):
     #Récupération des anciennes valeurs de WeatherTab avant modification
-    t= WeatherTab[0]
+    t = WeatherTab[0]
     alpha = random.randrange(-4, 4)
-    iteration.value= iteration.value +1
-    T= (math.cos(iteration.value)*t*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
-    print("temparature=",T)
+    with iteration.get_lock():
+        iteration.value += 1
+    T = (t + math.cos(0.1*iteration.value)*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
     WeatherTab[0] = int(T)
-    if (T<0) :
+    if T < 0:
         WeatherTab[1] = random.randint(1, 3) #1 : Soleil    2 : Nuage    3 : Neige
-    else :
+    else:
         WeatherTab[1] = random.randint(1, 2)    #il ne peut pas neiger si T>0°
-
 
 
 if __name__ == "__main__":
@@ -111,6 +111,7 @@ if __name__ == "__main__":
 
     #initialisation
     WeatherTab[0]=21
+
 
 
     maison1 = Home()
@@ -126,10 +127,11 @@ if __name__ == "__main__":
     for i in range(0, 4):
         print("")
         print("Début du jour ",i,"---------------------------------------------------")
+
         meteo = Process(target=runWeather, args=(WeatherTab, iteration))
         meteo.start()
         meteo.join()
-        print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1])
+        print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
         maison1.run()
         maison2.run()
 
