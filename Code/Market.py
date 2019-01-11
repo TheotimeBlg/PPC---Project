@@ -82,6 +82,7 @@ class Home(Process):
     }
 
     def run(self):
+
         self.Px = random.randint(1, 20)
         self.Cx = random.randint(1, 20)
         Q = self.Px - self.Cx
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
 
     #initialisation
-    WeatherTab[0]=21
+    WeatherTab[0] = 21
     thread = threading.Thread(target=handler, args=())
 
 
@@ -142,6 +143,7 @@ if __name__ == "__main__":
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
         maison1.run()
         maison2.run()
+
 
     maison1.join()
     maison2.join()
