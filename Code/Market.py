@@ -2,14 +2,16 @@ import random
 import random
 import time
 import math
-from multiprocessing import Process, Queue, Array, Value
+from multiprocessing import Process, Queue, Array, Value, threading
 
 global  Pt #prix à l'instant t
 global  fi #contribution à l'instant t de la météo
 global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
 global  Beta #coefficient de modulation des evenements exterieurs
 
+
 class Home(Process):
+
     def __init__(self):
         super().__init__()
         self.Px = 0
@@ -103,14 +105,20 @@ def runWeather(WeatherTab, iteration):
         WeatherTab[1] = random.randint(1, 2)    #il ne peut pas neiger si T>0°
 
 
+def handler(WeatherTab):
+    print("Starting Thread :", threading.current_thread().name)
+    Q = TransactionsMarket.get()
+
 if __name__ == "__main__":
 
     HomesQueue = Queue()
+    TransactionsMarket = Queue() #File de messages pour les achats/ventes
     WeatherTab = Array('i', range(2))
     iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
 
     #initialisation
     WeatherTab[0]=21
+    thread = threading.Thread(target=handler, args=())
 
 
 
@@ -126,7 +134,7 @@ if __name__ == "__main__":
 
     for i in range(0, 4):
         print("")
-        print("Début du jour ",i,"---------------------------------------------------")
+        print("Début du jour ", i, "---------------------------------------------------")
 
         meteo = Process(target=runWeather, args=(WeatherTab, iteration))
         meteo.start()
