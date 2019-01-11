@@ -124,7 +124,7 @@ class Meteo(Process):
 if __name__ == "__main__":
 
     HomesQueue = Queue()
-    TransactionsMarket = Queue() #File de messages pour les achats/ventes
+    GeneralQueue = Queue() #File de messages pour les achats/ventes
     WeatherTab = Array('i', range(2))
     iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
 
@@ -134,8 +134,8 @@ if __name__ == "__main__":
 
 
 
-    maison1 = Home()
-    maison2 = Home()
+    maison1 = Home(HomesQueue, GeneralQueue)
+    maison2 = Home(HomesQueue, GeneralQueue)
     weather = Meteo(WeatherTab, iteration)
 
 
