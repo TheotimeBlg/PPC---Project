@@ -12,7 +12,7 @@ class Home(Process):
         self.Cx = 0
         self.HomesQueue=HomesQueue
         self.GeneralQueue=GeneralQueue
-        self.Policy = random.randint(1, 3)      # 1 = donne toujours     # 2 = vend toujour    # 3 = essaie de donner, vend sinon
+        self.Policy = random.randint(1, 3)      # 1 = donne toujours     # 2 = vend toujours    # 3 = essaie de donner, vend sinon
         print("Je suis de type", self.Policy)
 
     def donne(self, Q):
@@ -27,7 +27,7 @@ class Home(Process):
 
     def achete(self, Q):
         try:
-            Q=math.fabs(Q) #on travaille avec la valeur absolue de Q car on sait pertinament que Q<0
+            Q=math.fabs(Q) #on travaille avec la valeur absolue de Q car on sait pertinament que si on achète alors Q<0
             print("J'essaie d'avoir de l'energie gratuite")
             don = int(self.HomesQueue.get(True, 2).decode()) #Reste bloqué pendant 2 secondes pour essayer d'avoir de l'énergie gratuite
 
@@ -63,13 +63,17 @@ class Home(Process):
 
     def middle(self, Q):
         # - BALANCE TON DON
-        # - sleep(10 sec)
+        # - sleep(2 sec)
         # - get(QUE AVEC TON PID) exceptions
         # - Si pas d'exception tu vend
         # - sinon Fin
 
         if Q > 0:
-            if HomesQueue.empty():
+            self.donne(Q)
+            sleep(2)
+            if !(self.HomesQueue.empty()):
+
+
                 print("il n'y a pas de dons en cours")
                 self.donne(Q)
             else:
