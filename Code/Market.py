@@ -102,7 +102,7 @@ class Meteo(Process):
 
     def run(self):
 
-        #Récupération des anciennes valeurs de WeatherTab avant modification et calcul de alpha de manière aléatoire
+        # Récupération des anciennes valeurs de WeatherTab avant modification et calcul de alpha de manière aléatoire
         t = self.WeatherTab[0]
         alpha = random.randrange(-4, 4)
 
@@ -156,3 +156,5 @@ if __name__ == "__main__":
     maison1.join()
     maison2.join()
     weather.join()
+
+#CECI EST UN TEST DE GIT
