@@ -156,5 +156,3 @@ if __name__ == "__main__":
     maison1.join()
     maison2.join()
     weather.join()
-
-#CECI EST UN TEST DE GIT

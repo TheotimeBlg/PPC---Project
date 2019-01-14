@@ -1,4 +1,4 @@
-from multiprocessing import Queue, Process
+from multiprocessing import Queue, Process, Value
 import threading
 import time
 
@@ -14,40 +14,41 @@ def listener(WeatherTab):
 
 
 class worker(Process):
-    def __init__(self, lock, name):
+    def __init__(self, name, drapeau):
         super().__init__()
-        self.lock = lock
         self.name = name
+        self.Flag = drapeau
 
     def run(self):
         print("starting thread :", self.name)
 
         while True:
-            time.sleep(1)
-            print("J'ai fini de travailler")
-            lock.acquire()
-            lock.release()
-
-
-        print("Ending thread :", threading.current_thread().name)
+            if self.Flag.value == 1:
+                time.sleep(1)
+                print(self.name, "a fini de travailler")
+        print("Ending thread :", self.name)
 
 if __name__ == "__main__":
 
+    print("starting thread :", threading.current_thread().name)
     TransactionsMarket = Queue()
     thread = threading.Thread(target=listener, args=())
     TransOfDay = list()
 
-    lock = threading.Lock()
+    Flag = Value('i', 0)
 
-    trav1 = worker(lock, "trav1")
-    trav2 = worker(lock, "trav2")
+    trav1 = worker("trav1", Flag)
+    trav2 = worker("trav2", Flag)
 
     trav1.start()
     trav2.start()
 
     for i in range(0,5):
-        print("Début du jour",i,"------------------------")
-        lock.acquire()
-        time.sleep(3)
+        print("Début du jour", i, "------------------------")
+        Flag.value = 1
+        time.sleep(0.1) # Pendant ce temps on veut être sûrs que tous les threads sont lancés (mais n'ont pas encore fini !)
+        Flag.value = 0
+        time.sleep(3)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
         #Calcul du nouveau prix
-        lock.release()
+
+    print("Ending thread :", threading.current_thread().name)
