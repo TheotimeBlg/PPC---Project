@@ -94,30 +94,45 @@ class Home(Process):
 
 class Meteo(Process):
 
-    def __init__(self, WeatherTabtab, iteration):
+    def __init__(self, WeatherTab, iteration, drapeau, name):
         super().__init__()
-        self.WeatherTab=WeatherTab
-        self.iteration=iteration
+        self.WeatherTab = WeatherTab
+        self.iteration = iteration
+        self.Flag = drapeau
+        self.name = name
 
 
     def run(self):
 
-        # Récupération des anciennes valeurs de WeatherTab avant modification et calcul de alpha de manière aléatoire
-        t = self.WeatherTab[0]
-        alpha = random.randrange(-4, 4)
+        print("starting thread :", self.name)
 
-        with self.iteration.get_lock():
-            self.iteration.value += 1
+        a = time.time()
+        timeOut = 0
+        while timeOut < 1000:
 
-        T = (t + math.cos(0.1*iteration.value)*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
-        self.WeatherTab[0] = int(T)
+            b = time.time()
+            timeOut = b-a
 
-        if T < 0:
-            WeatherTab[1] = random.randint(1, 3) #1 : Soleil    2 : Nuage    3 : Neige
-        else:
-            WeatherTab[1] = random.randint(1, 2)    #il ne peut pas neiger si T>0°
+            if self.Flag.value == 1:
+                # Récupération des anciennes valeurs de WeatherTab avant modification et calcul de alpha de manière aléatoire
+                t = self.WeatherTab[0]
+                alpha = random.randrange(-4, 4)
+
+                with self.iteration.get_lock():
+                    self.iteration.value += 1
+
+                T = (t + math.cos(0.1*iteration.value)*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
+                self.WeatherTab[0] = int(T)
+
+                if T < 0:
+                    WeatherTab[1] = random.randint(1, 3) #1 : Soleil    2 : Nuage    3 : Neige
+                else:
+                    WeatherTab[1] = random.randint(1, 2)    #il ne peut pas neiger si T>0°
 
 
+                time.sleep(0.2)
+
+        print("Ending thread :", self.name)
 
 
 
@@ -128,31 +143,34 @@ if __name__ == "__main__":
     WeatherTab = Array('i', range(2))
     iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
 
+    # Pour la synchro :
+    Flag = Value('i', 0)
+
     #initialisation
     WeatherTab[0]=21
-    #thread = threading.Thread(target=handler, args=())
 
+    #maison1 = Home(HomesQueue, GeneralQueue)
+    #maison2 = Home(HomesQueue, GeneralQueue)
+    weather = Meteo(WeatherTab, iteration, Flag, "Meteo")
 
-
-    maison1 = Home(HomesQueue, GeneralQueue)
-    maison2 = Home(HomesQueue, GeneralQueue)
-    weather = Meteo(WeatherTab, iteration)
-
-
-    maison1.start()
-    maison2.start()
+    #maison1.start()
+    #maison2.start()
     weather.start()
 
-    time.sleep(3)
+    time.sleep(1)
 
-    for i in range(0, 4):
+    for i in range(0, 40):
         print("")
         print("Début du jour ", i, "---------------------------------------------------")
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
-        maison1.run()
-        maison2.run()
-        weather.run()
+        Flag.value = 1
+        time.sleep(0.1)
+        Flag.value = 0
+        time.sleep(1)
+        #maison1.run()
+        #maison2.run()
+        #weather.run()
 
-    maison1.join()
-    maison2.join()
+    #maison1.join()
+    #maison2.join()
     weather.join()

@@ -22,11 +22,17 @@ class worker(Process):
     def run(self):
         print("starting thread :", self.name)
 
-        while True:
+        a = time.time()
+        timeOut = 0
+
+        while timeOut < 10000:
+            b = time.time()
+            timeOut = b-a
             if self.Flag.value == 1:
                 time.sleep(1)
                 print(self.name, "a fini de travailler")
         print("Ending thread :", self.name)
+
 
 if __name__ == "__main__":
 
