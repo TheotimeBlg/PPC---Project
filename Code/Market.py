@@ -167,10 +167,12 @@ if __name__ == "__main__":
 
     maison1 = Home("maison1", HomesQueue, GeneralQueue)
     maison2 = Home("maison2", HomesQueue, GeneralQueue)
+    maison3 = Home("maison3", HomesQueue, GeneralQueue)
     weather = Meteo(WeatherTab, iteration, Flag, "Meteo")
 
     maison1.start()
     maison2.start()
+    maison3.start()
     weather.start()
 
     time.sleep(1)
@@ -187,4 +189,5 @@ if __name__ == "__main__":
 
     maison1.join()
     maison2.join()
+    maison3.join()
     weather.join()
