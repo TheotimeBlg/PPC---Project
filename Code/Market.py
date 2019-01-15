@@ -36,10 +36,10 @@ class Home(Process):
             print(self.name, "essaie d'avoir de l'energie gratuite...")
             don = int(HomesQueue.get(True, 2))
 
-            if don > Q:
+            if don > -Q:
                 print(self.name, "prend", don, "Energie et remet", don + Q, "Energie dans la queue.")
                 self.donne(don+Q)
-            elif don < Q:
+            elif don < -Q:
                 print(self.name, "prend", don, "Energie, mais ça ne suffit pas ! Il lui manque", Q + don, "Energie.")
                 self.achete(Q+don)
             else:
@@ -153,6 +153,23 @@ class Meteo(Process):
 
 
 if __name__ == "__main__":
+    maFile = Queue()
+
+    def afficheQueue(maFile):
+
+        copy = []
+        i = 0
+
+        print("-------------------------------------------------")
+        while not maFile.empty():
+                n = maFile.get()
+                print("| ", n.decode(), "", end='')
+                copy.append(n)
+                i += 1
+        for k in range(len(copy)):
+            maFile.put(copy[k])
+        print(" |\n-------------------------------------------------")
+
 
     HomesQueue = Queue()
     GeneralQueue = Queue() #File de messages pour les achats/ventes
@@ -182,9 +199,10 @@ if __name__ == "__main__":
         print("Début du jour ", i, "---------------------------------------------------")
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
         Flag.value = 1
-        time.sleep(0.1)
+        time.sleep(0.1)  # Pendant ce temps on veut être sûrs que tous les threads sont lancés (mais n'ont pas encore fini !)
         Flag.value = 0
-        time.sleep(10)
+        time.sleep(5)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
+        afficheQueue(HomesQueue)
 
 
     maison1.join()
