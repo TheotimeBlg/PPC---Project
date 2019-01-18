@@ -7,22 +7,18 @@ import threading
 import os
 import signal
 
-global  Pt #prix à l'instant t
-global  fi #contribution à l'instant t de la météo
-global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
-global  Beta #coefficient de modulation des evenements exterieurs
-
 
 def GestionsHandler(Q):
-    print("Starting Thread :", threading.current_thread().name)
+    #print("Starting Thread :", threading.current_thread().name)
     TransOfDay.append(float(Q))
 
 
 
 def listener():
-    print("Starting Thread :", threading.current_thread().name)
+    #print("Starting Thread :", threading.current_thread().name)
     while(True):
         Q = GeneralQueue.get()
+        print("Q du listener", Q)
         gestion = threading.Thread(target=GestionsHandler, args=(Q.decode(),))
         gestion.start()
         gestion.join()
@@ -84,7 +80,7 @@ class Home(Process):
         except Exception as e:
             print(e)
             print("No givers !")
-            self.GeneralQueue.put(str(Q).encode())
+            self.GeneralQueue.put(str(-Q).encode())
             print(self.name, "achète au market", Q, "Energie !")
 
     def giver(self, Q):
@@ -106,10 +102,8 @@ class Home(Process):
     def middle(self, Q):
         if Q > 0:
             if HomesQueue.empty():
-                print("il n'y a pas de dons en cours")
                 self.donne(Q)
             else:
-                print(self.name, "n'a pas besoin de donner, il y a déjà des dons en cours !")
                 self.vend(Q)
         elif Q < 0:
             self.achete(Q)
@@ -136,7 +130,7 @@ class Home(Process):
                 self.Px = random.randint(1, 20)
                 self.Cx = random.randint(1, 20)
                 Q = self.Px - self.Cx
-                print(Q)
+                print("Q", Q)
 
                 func = self.switcher.get(self.Policy, "")
                 func(self, Q)
@@ -197,12 +191,12 @@ class External(Process):
 
     def run(self):
         while True:
-            time.sleep(random.randint(5, 20))
+            time.sleep(random.randint(5, 15))
             print("Choix du signal")
-            cata = random.randint(1, 2)
-            if cata == 1:
+            cata = random.random()
+            if cata > 0.4:
                 os.kill(os.getppid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
-            elif cata == 2:
+            elif cata <= 0.4:
                 os.kill(os.getppid(), signal.SIGUSR2) # 2 = Tension Diplomatique
 
 
@@ -216,13 +210,13 @@ if __name__ == "__main__":
         if sig == signal.SIGUSR1:
             print("Catastrophe ! Trouble social") #le prix diminue
             ExternalValues[0] = 1
-            ExternalValues[1] = -0.05
+            ExternalValues[1] = -0.04
             print(ExternalValues)
 
         elif sig == signal.SIGUSR2:
             print("Catastrophe ! Tension diplomatique") #e prix augmente
             ExternalValues[0] = 1
-            ExternalValues[1] = 0.1
+            ExternalValues[1] = 0.07
             print(ExternalValues)
 
 
@@ -288,6 +282,7 @@ if __name__ == "__main__":
 
         #la contribution f1 est modifiée en fonction de ce qui a été vendu ou acheté au market. Plus on a acheté, plus le prix monte (f1 sera donc négatif)
         f1 =somme
+        print("somme :", somme)
 
         #la contribution f2 est modifiée en fonction de la température : si il fait froid, le prix augmentent car les homes sont obligées d'acheter
         f2= (15-WeatherTab[0])
@@ -296,7 +291,7 @@ if __name__ == "__main__":
 
 
         #prix actuel
-        Pt = math.fabs(0.999*Ptmoins1 - 0.001*f1 + 0.0005*f2 + ExternalValues[0]*ExternalValues[1])
+        Pt = math.fabs(0.99*Ptmoins1 - 0.001*f1 + 0.002*f2 + ExternalValues[0]*ExternalValues[1])
         print("Le prix actuel est :", Pt)
 
         Ptmoins1=Pt
