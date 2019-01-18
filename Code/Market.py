@@ -4,12 +4,21 @@ import time
 import math
 from multiprocessing import Process, Queue, Array, Value
 import threading
+import os
+import signal
 
 global  Pt #prix à l'instant t
 global  fi #contribution à l'instant t de la météo
 global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
 global  Beta #coefficient de modulation des evenements exterieurs
 
+def handler(sig, frame):
+    if sig == signal.SIGUSR1:
+        print("Catastrophe ! Trouble social")
+        Beta = 1.5
+    elif sig == signal.SIGUSR2:
+        print("Catastrophe ! Tension diplomatique")
+        Beta = 2
 
 class Home(Process):
 
@@ -154,6 +163,22 @@ class Meteo(Process):
 
         print("Ending thread :", self.name)
 
+
+
+class External(Process):
+    def __init__(self):
+        super().__init__()
+
+
+    def run(self):
+        while True:
+            time.sleep(random.randint(1, 2))
+            print("Choix du signal")
+            cata = random.randint(1, 2)
+            if cata == 1:
+                os.kill(os.getpid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
+            elif cata == 2:
+                os.kill(os.getpid(), signal.SIGUSR2) # 2 = Tension Diplomatique
 
 
 if __name__ == "__main__":
