@@ -13,8 +13,21 @@ global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
 global  Beta #coefficient de modulation des evenements exterieurs
 
 
+def handler(sig, frame):
+    global Prix
+    if sig == signal.SIGUSR1:
+        print("Catastrophe ! Trouble social")
+        Prix = 1.5 * Prix
+
+    elif sig == signal.SIGUSR2:
+        print("Catastrophe ! Tension diplomatique")
+        Prix = 2 * Prix
+
+
 def GestionsHandler(Q):
-    TransOfDay.append(int(Q))
+    print("Starting Thread :", threading.current_thread().name)
+    TransOfDay.append(float(Q))
+
 
 
 def listener():
@@ -22,7 +35,7 @@ def listener():
     while(True):
         Q = GeneralQueue.get()
         print("hi : ", Q.decode())
-        gestion = threading.Thread(target=GestionsHandler, args=(Q.decode()))
+        gestion = threading.Thread(target=GestionsHandler, args=(Q.decode(),))
         gestion.start()
         gestion.join()
 
@@ -189,53 +202,33 @@ class Meteo(Process):
 
 
 class External(Process):
-    def __init__(self, name):
+    def __init__(self):
         super().__init__()
-        self.name = name
 
 
     def run(self):
         while True:
-            time.sleep(random.randint(1, 10))
+            time.sleep(1) #random.randint(1, 2)
             print("Choix du signal")
             cata = random.randint(1, 2)
             if cata == 1:
-                os.kill(os.getppid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
+                os.kill(os.getpid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
             elif cata == 2:
-                os.kill(os.getppid(), signal.SIGUSR2) # 2 = Tension Diplomatique
+                os.kill(os.getpid(), signal.SIGUSR2) # 2 = Tension Diplomatique
 
 
 if __name__ == "__main__":
     maFile = Queue()
     global Prix
 
-    ExternalValues = [0, 0]
-
-    def handler(sig, frame):
-        if sig == signal.SIGUSR1:
-            print("Catastrophe ! Trouble social")
-            ExternalValues[0] = 1
-            ExternalValues[1] = 1.5
-            print(ExternalValues)
-
-        elif sig == signal.SIGUSR2:
-            print("Catastrophe ! Tension diplomatique")
-            ExternalValues[0] = 1
-            ExternalValues[1] = 2
-            print(ExternalValues)
-
-
     # Initialisation de prix TEMPORAIRE
     Prix = 100
-
-    signal.signal(signal.SIGUSR1, handler)
-    signal.signal(signal.SIGUSR2, handler)
 
     HomesQueue = Queue()
     GeneralQueue = Queue() #File de messages pour les achats/ventes
     WeatherTab = Array('i', range(2))
-    iteration = Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
-    TransOfDay = list() #permettra de calculer le coefficient gamma du prix
+    iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
+    TransOfDay=list() #permettra de calculer le coefficient gamma du prix
 
 
     # Pour la synchro :
@@ -250,7 +243,7 @@ if __name__ == "__main__":
     maison2 = Home("maison2", HomesQueue, GeneralQueue)
     maison3 = Home("maison3", HomesQueue, GeneralQueue)
     weather = Meteo(WeatherTab, iteration, Flag, "Meteo")
-    ext = External("External")
+    ext = External()
     ListeningThread = threading.Thread(target=listener, args=())
 
     maison1.start()
@@ -258,7 +251,7 @@ if __name__ == "__main__":
     maison3.start()
     weather.start()
     ext.start()
-    ListeningThread.start()
+    ListeningThread.start()int
 
     global ExtPID       # Récupération du PID de external.
     ExtPID = ext.pid
@@ -274,6 +267,7 @@ if __name__ == "__main__":
         Flag.value = 0
         time.sleep(5)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
         afficheQueue(HomesQueue)
+        afficheQueue(GeneralQueue)
 
         #Calcul du prix
 
@@ -285,7 +279,6 @@ if __name__ == "__main__":
         #prix actuel
         Pt = gamma*Ptmoins1
         print("Le prix actuel est :", Pt)
-        print("Prix = ", Prix * ExternalValues[1])
 
         Ptmoins1=Pt
         TransOfDay=[] #on vide TransOfDay
