@@ -23,7 +23,6 @@ def listener():
     print("Starting Thread :", threading.current_thread().name)
     while(True):
         Q = GeneralQueue.get()
-        print("hi : ", Q.decode())
         gestion = threading.Thread(target=GestionsHandler, args=(Q.decode(),))
         gestion.start()
         gestion.join()
@@ -71,7 +70,7 @@ class Home(Process):
         try:
             Q=math.fabs(Q) #on travaille avec la valeur absolue de Q car on sait pertinament que si on achète alors Q<0
             print(self.name, "essaie d'avoir de l'energie gratuite...")
-            don = int(self.HomesQueue.get(True, 2).decode()) #Reste bloqué pendant 2 secondes pour essayer d'avoir de l'énergie gratuite
+            don = float(self.HomesQueue.get(True, 2).decode()) #Reste bloqué pendant 2 secondes pour essayer d'avoir de l'énergie gratuite
 
             if don > Q:
                 print(self.name, "prend", don, "Energie et remet", don - Q, "Energie dans la queue.")
@@ -198,7 +197,7 @@ class External(Process):
 
     def run(self):
         while True:
-            time.sleep(random.randint(1, 10))
+            time.sleep(random.randint(5, 20))
             print("Choix du signal")
             cata = random.randint(1, 2)
             if cata == 1:
@@ -215,15 +214,15 @@ if __name__ == "__main__":
 
     def handler(sig, frame):
         if sig == signal.SIGUSR1:
-            print("Catastrophe ! Trouble social")
+            print("Catastrophe ! Trouble social") #le prix diminue
             ExternalValues[0] = 1
-            ExternalValues[1] = 1.5
+            ExternalValues[1] = -0.05
             print(ExternalValues)
 
         elif sig == signal.SIGUSR2:
-            print("Catastrophe ! Tension diplomatique")
+            print("Catastrophe ! Tension diplomatique") #e prix augmente
             ExternalValues[0] = 1
-            ExternalValues[1] = 2
+            ExternalValues[1] = 0.1
             print(ExternalValues)
 
 
@@ -244,7 +243,7 @@ if __name__ == "__main__":
     Flag = Value('i', 0)
 
     #initialisation
-    WeatherTab[0]=21
+    WeatherTab[0]=15
     Ptmoins1 = 0.145 #prix au temps t moins1
     somme=0 #sera utile par la suite pour calculer la somme des transactions de la journée
 
@@ -260,7 +259,7 @@ if __name__ == "__main__":
     maison3.start()
     weather.start()
     ext.start()
-    ListeningThread.start()int
+    ListeningThread.start()
 
     global ExtPID       # Récupération du PID de external.
     ExtPID = ext.pid
@@ -271,6 +270,8 @@ if __name__ == "__main__":
         print("")
         print("Début du jour ", i, "---------------------------------------------------")
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
+        ExternalValues[0]=0
+        ExternalValues[1]=0
         Flag.value = 1
         time.sleep(0.1)  # Pendant ce temps on veut être sûrs que tous les threads sont lancés (mais n'ont pas encore fini !)
         Flag.value = 0
@@ -283,12 +284,20 @@ if __name__ == "__main__":
         #calcul la somme de l'ensemble des transactions de la journée
         for j in range(len(TransOfDay)):
             somme=somme+TransOfDay[j]
-        #le coefficient gamma est modifiée en fonction de ce qui a été vendu ou acheté au market. Plus on a acheté, plus le prix monte
-        gamma = 1.0-(somme/100)
+
+
+        #la contribution f1 est modifiée en fonction de ce qui a été vendu ou acheté au market. Plus on a acheté, plus le prix monte (f1 sera donc négatif)
+        f1 =somme
+
+        #la contribution f2 est modifiée en fonction de la température : si il fait froid, le prix augmentent car les homes sont obligées d'acheter
+        f2= (15-WeatherTab[0])
+
+
+
+
         #prix actuel
-        Pt = gamma*Ptmoins1
+        Pt = math.fabs(0.999*Ptmoins1 - 0.001*f1 + 0.0005*f2 + ExternalValues[0]*ExternalValues[1])
         print("Le prix actuel est :", Pt)
-        print("Prix = ", Prix * ExternalValues[1])
 
         Ptmoins1=Pt
         TransOfDay=[] #on vide TransOfDay
