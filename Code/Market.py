@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
     time.sleep(1)
 
-    for i in range(0, 5):
+    for i in range(0, 30):
         print("")
         print("Début du jour ", i, "---------------------------------------------------")
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
