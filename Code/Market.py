@@ -66,7 +66,7 @@ class Home(Process):
         try:
             Q=math.fabs(Q) #on travaille avec la valeur absolue de Q car on sait pertinament que si on achète alors Q<0
             print(self.name, "essaie d'avoir de l'energie gratuite...")
-            don = float(self.HomesQueue.get(True, 2).decode()) #Reste bloqué pendant 2 secondes pour essayer d'avoir de l'énergie gratuite
+            don = float(self.HomesQueue.get(True, 1).decode()) #Reste bloqué pendant 1 secondes pour essayer d'avoir de l'énergie gratuite
 
             if don > Q:
                 print(self.name, "prend", don, "Energie et remet", don - Q, "Energie dans la queue.")
@@ -166,12 +166,12 @@ class Meteo(Process):
             if self.Flag.value == 1:
                 # Récupération des anciennes valeurs de WeatherTab avant modification et calcul de alpha de manière aléatoire
                 t = self.WeatherTab[0]
-                alpha = random.randrange(-4, 4)
+                alpha = random.randrange(-3, 3)
 
                 with self.iteration.get_lock():
                     self.iteration.value += 1
 
-                T = (t + math.cos(0.1*iteration.value)*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
+                T = (t + 1.3*math.cos(0.4*iteration.value)*alpha)   #La nouvelle température est calculée à partir de l'ancienne température, d'un paramètre alpha aléatoire et d'un paramètre w implémenté de 1 à chaque appel de run
                 self.WeatherTab[0] = int(T)
 
                 if T < 0:
@@ -205,6 +205,7 @@ if __name__ == "__main__":
     maFile = Queue()
     global Prix
     tableauPrix = []
+    tableauWeather = []
 
     ExternalValues = [0, 0]
 
@@ -269,7 +270,7 @@ if __name__ == "__main__":
         Flag.value = 1
         time.sleep(0.1)  # Pendant ce temps on veut être sûrs que tous les threads sont lancés (mais n'ont pas encore fini !)
         Flag.value = 0
-        time.sleep(5)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
+        time.sleep(3)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
         afficheQueue(HomesQueue)
         afficheQueue(GeneralQueue)
 
@@ -291,13 +292,24 @@ if __name__ == "__main__":
 
 
         #prix actuel
-        Pt = math.fabs(0.99*Ptmoins1 - 0.1*f1 + 0.002*f2 + 0.3*ExternalValues[0]*ExternalValues[1])
+        Pt = math.fabs(0.90*Ptmoins1 - 0.005*f1 + 0.002*f2 + 0.3*ExternalValues[0]*ExternalValues[1])
+        if Pt >= 0.35 :
+            Pt = 0.35
+        if Pt <= 0.02 :
+            Pt = 0.02   # SUBVENTIONS D'ETAT
         print("Le prix actuel est :", Pt)
 
-        tableauWeather =
+        tableauWeather.append(WeatherTab[0])
         tableauPrix.append(Pt)
+        plt.subplot(211)
         plt.plot(tableauPrix)
+        plt.ylabel('Prix (euros / kWh')
+        plt.xlabel('Temps (jours)')
         plt.scatter(i, tableauPrix[i])
+        plt.subplot(212)
+        plt.plot(tableauWeather)
+        plt.xlabel('Temps (jours)')
+        plt.ylabel('Température (°C)')
         plt.pause(0.5)
 
         Ptmoins1=Pt
