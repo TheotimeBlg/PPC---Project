@@ -6,6 +6,8 @@ from multiprocessing import Process, Queue, Array, Value
 import threading
 import os
 import signal
+import matplotlib.pyplot as plt
+
 
 
 def GestionsHandler(Q):
@@ -202,6 +204,7 @@ class External(Process):
 if __name__ == "__main__":
     maFile = Queue()
     global Prix
+    tableauPrix = []
 
     ExternalValues = [0, 0]
 
@@ -222,7 +225,7 @@ if __name__ == "__main__":
     # Initialisation de prix TEMPORAIRE
     Prix = 100
 
-    signal.signal(signal.SIGUSR1, handler)
+    signal.signal(signal.SIGUSR1, handler)plt.show()
     signal.signal(signal.SIGUSR2, handler)
 
     HomesQueue = Queue()
@@ -292,9 +295,15 @@ if __name__ == "__main__":
         Pt = math.fabs(0.99*Ptmoins1 - 0.004*f1 + 0.002*f2 + ExternalValues[0]*ExternalValues[1])
         print("Le prix actuel est :", Pt)
 
+        tableauPrix.append(Pt)
+        plt.plot(tableauPrix)
+        plt.scatter(i, tableauPrix[i])
+        plt.pause(0.5)
+
         Ptmoins1=Pt
         TransOfDay=[] #on vide TransOfDay
 
+    plt.show()
 
     maison1.join()
     maison2.join()
