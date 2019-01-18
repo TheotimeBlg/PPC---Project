@@ -195,9 +195,9 @@ class External(Process):
         while True:
             time.sleep(random.randint(5, 15))
             cata = random.random()
-            if cata > 0.4:
+            if cata > 0.3:
                 os.kill(os.getppid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
-            elif cata <= 0.4:
+            elif cata <= 0.3:
                 os.kill(os.getppid(), signal.SIGUSR2) # 2 = Tension Diplomatique
 
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         if sig == signal.SIGUSR1:
             print("Catastrophe ! Trouble social") #le prix diminue
             ExternalValues[0] = 1
-            ExternalValues[1] = -0.01
+            ExternalValues[1] = -0.05
             print(ExternalValues)
 
         elif sig == signal.SIGUSR2:
@@ -223,9 +223,8 @@ if __name__ == "__main__":
 
 
     # Initialisation de prix TEMPORAIRE
-    Prix = 100
 
-    signal.signal(signal.SIGUSR1, handler)plt.show()
+    signal.signal(signal.SIGUSR1, handler)
     signal.signal(signal.SIGUSR2, handler)
 
     HomesQueue = Queue()
@@ -292,9 +291,10 @@ if __name__ == "__main__":
 
 
         #prix actuel
-        Pt = math.fabs(0.99*Ptmoins1 - 0.004*f1 + 0.002*f2 + ExternalValues[0]*ExternalValues[1])
+        Pt = math.fabs(0.99*Ptmoins1 - 0.1*f1 + 0.002*f2 + 0.3*ExternalValues[0]*ExternalValues[1])
         print("Le prix actuel est :", Pt)
 
+        tableauWeather =
         tableauPrix.append(Pt)
         plt.plot(tableauPrix)
         plt.scatter(i, tableauPrix[i])
