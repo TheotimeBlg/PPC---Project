@@ -25,7 +25,9 @@ def handler(sig, frame):
 
 
 def GestionsHandler(Q):
-    TransOfDay.append(int(Q))
+    print("Starting Thread :", threading.current_thread().name)
+    TransOfDay.append(float(Q))
+
 
 
 def listener():
@@ -33,7 +35,7 @@ def listener():
     while(True):
         Q = GeneralQueue.get()
         print("hi : ", Q.decode())
-        gestion = threading.Thread(target=GestionsHandler, args=(Q.decode()))
+        gestion = threading.Thread(target=GestionsHandler, args=(Q.decode(),))
         gestion.start()
         gestion.join()
 
@@ -249,7 +251,7 @@ if __name__ == "__main__":
     maison3.start()
     weather.start()
     ext.start()
-    ListeningThread.start()
+    ListeningThread.start()int
 
     global ExtPID       # Récupération du PID de external.
     ExtPID = ext.pid
@@ -265,6 +267,7 @@ if __name__ == "__main__":
         Flag.value = 0
         time.sleep(5)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
         afficheQueue(HomesQueue)
+        afficheQueue(GeneralQueue)
 
         #Calcul du prix
 
@@ -272,7 +275,7 @@ if __name__ == "__main__":
         for j in range(len(TransOfDay)):
             somme=somme+TransOfDay[j]
         #le coefficient gamma est modifiée en fonction de ce qui a été vendu ou acheté au market. Plus on a acheté, plus le prix monte
-        gamma = 1.0-(compteur/100)
+        gamma = 1.0-(somme/100)
         #prix actuel
         Pt = gamma*Ptmoins1
         print("Le prix actuel est :", Pt)
