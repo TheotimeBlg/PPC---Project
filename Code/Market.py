@@ -13,17 +13,6 @@ global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
 global  Beta #coefficient de modulation des evenements exterieurs
 
 
-def handler(sig, frame):
-    global Prix
-    if sig == signal.SIGUSR1:
-        print("Catastrophe ! Trouble social")
-        Prix = 1.5 * Prix
-
-    elif sig == signal.SIGUSR2:
-        print("Catastrophe ! Tension diplomatique")
-        Prix = 2 * Prix
-
-
 def GestionsHandler(Q):
     print("Starting Thread :", threading.current_thread().name)
     TransOfDay.append(float(Q))
@@ -202,27 +191,47 @@ class Meteo(Process):
 
 
 class External(Process):
-    def __init__(self):
+    def __init__(self, name):
         super().__init__()
+        self.name = name
 
 
     def run(self):
         while True:
-            time.sleep(1) #random.randint(1, 2)
+            time.sleep(random.randint(1, 10))
             print("Choix du signal")
             cata = random.randint(1, 2)
             if cata == 1:
-                os.kill(os.getpid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
+                os.kill(os.getppid(), signal.SIGUSR1) # 1 = Trouble social  (3 = pénurie matière première)
             elif cata == 2:
-                os.kill(os.getpid(), signal.SIGUSR2) # 2 = Tension Diplomatique
+                os.kill(os.getppid(), signal.SIGUSR2) # 2 = Tension Diplomatique
 
 
 if __name__ == "__main__":
     maFile = Queue()
     global Prix
 
+    ExternalValues = [0, 0]
+
+    def handler(sig, frame):
+        if sig == signal.SIGUSR1:
+            print("Catastrophe ! Trouble social")
+            ExternalValues[0] = 1
+            ExternalValues[1] = 1.5
+            print(ExternalValues)
+
+        elif sig == signal.SIGUSR2:
+            print("Catastrophe ! Tension diplomatique")
+            ExternalValues[0] = 1
+            ExternalValues[1] = 2
+            print(ExternalValues)
+
+
     # Initialisation de prix TEMPORAIRE
     Prix = 100
+
+    signal.signal(signal.SIGUSR1, handler)
+    signal.signal(signal.SIGUSR2, handler)
 
     HomesQueue = Queue()
     GeneralQueue = Queue() #File de messages pour les achats/ventes
@@ -243,7 +252,7 @@ if __name__ == "__main__":
     maison2 = Home("maison2", HomesQueue, GeneralQueue)
     maison3 = Home("maison3", HomesQueue, GeneralQueue)
     weather = Meteo(WeatherTab, iteration, Flag, "Meteo")
-    ext = External()
+    ext = External("External")
     ListeningThread = threading.Thread(target=listener, args=())
 
     maison1.start()
@@ -251,7 +260,7 @@ if __name__ == "__main__":
     maison3.start()
     weather.start()
     ext.start()
-    ListeningThread.start()int
+    ListeningThread.start()
 
     global ExtPID       # Récupération du PID de external.
     ExtPID = ext.pid
@@ -279,6 +288,7 @@ if __name__ == "__main__":
         #prix actuel
         Pt = gamma*Ptmoins1
         print("Le prix actuel est :", Pt)
+        print("Prix = ", Prix * ExternalValues[1])
 
         Ptmoins1=Pt
         TransOfDay=[] #on vide TransOfDay
