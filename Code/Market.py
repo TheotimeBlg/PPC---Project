@@ -12,13 +12,32 @@ global  fi #contribution à l'instant t de la météo
 global  mu # ={0,1} 0: pas d'evenement externe 1 : un évenement externe
 global  Beta #coefficient de modulation des evenements exterieurs
 
+
 def handler(sig, frame):
+    global Prix
     if sig == signal.SIGUSR1:
         print("Catastrophe ! Trouble social")
-        Beta = 1.5
+        Prix = 1.5 * Prix
+
     elif sig == signal.SIGUSR2:
         print("Catastrophe ! Tension diplomatique")
-        Beta = 2
+        Prix = 2 * Prix
+
+
+def afficheQueue(maFile):
+
+    copy = []
+    i = 0
+
+    print("-------------------------------------------------")
+    while not maFile.empty():
+            n = maFile.get()
+            print("| ", n.decode(), "", end='')
+            copy.append(n)
+            i += 1
+    for k in range(len(copy)):
+        maFile.put(copy[k])
+    print(" |\n-------------------------------------------------")
 
 class Home(Process):
 
@@ -172,7 +191,7 @@ class External(Process):
 
     def run(self):
         while True:
-            time.sleep(random.randint(1, 2))
+            time.sleep(1) #random.randint(1, 2)
             print("Choix du signal")
             cata = random.randint(1, 2)
             if cata == 1:
@@ -183,22 +202,10 @@ class External(Process):
 
 if __name__ == "__main__":
     maFile = Queue()
+    global Prix
 
-    def afficheQueue(maFile):
-
-        copy = []
-        i = 0
-
-        print("-------------------------------------------------")
-        while not maFile.empty():
-                n = maFile.get()
-                print("| ", n.decode(), "", end='')
-                copy.append(n)
-                i += 1
-        for k in range(len(copy)):
-            maFile.put(copy[k])
-        print(" |\n-------------------------------------------------")
-
+    # Initialisation de prix TEMPORAIRE
+    Prix = 100
 
     HomesQueue = Queue()
     GeneralQueue = Queue() #File de messages pour les achats/ventes
@@ -215,11 +222,16 @@ if __name__ == "__main__":
     maison2 = Home("maison2", HomesQueue, GeneralQueue)
     maison3 = Home("maison3", HomesQueue, GeneralQueue)
     weather = Meteo(WeatherTab, iteration, Flag, "Meteo")
+    ext = External()
 
     maison1.start()
     maison2.start()
     maison3.start()
     weather.start()
+    ext.start()
+
+    global ExtPID       # Récupération du PID de external.
+    ExtPID = ext.pid
 
     time.sleep(1)
 
@@ -232,6 +244,7 @@ if __name__ == "__main__":
         Flag.value = 0
         time.sleep(5)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
         afficheQueue(HomesQueue)
+        print(Prix)
 
 
     maison1.join()

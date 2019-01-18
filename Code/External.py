@@ -22,12 +22,17 @@ class External(Process):
 
 
 def handler(sig, frame):
+    global Prix
     if sig == signal.SIGUSR1:
         print("Catastrophe ! Trouble social")
+        Prix = 1.5 * Prix
+        print(Prix)
 
     elif sig == signal.SIGUSR2:
         print("Catastrophe ! Tension diplomatique")
-        Beta = 2
+        Prix = 2 * Prix
+        print(Prix)
+
 
 
 if __name__ == "__main__":
@@ -35,7 +40,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGUSR2, handler)
     p = External()
 
+    global Prix
     Prix = 100
+
     p.start()
 
     global externalPID
