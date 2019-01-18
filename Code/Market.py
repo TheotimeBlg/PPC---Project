@@ -29,25 +29,29 @@ class Home(Process):
         print(self.name, "donne ses ", Q, "Energie.")
 
     def vend(self, Q):
+        message = str(Q).encode()
+        self.GeneralQueue.put(message)
         print(self.name, "vend au market",Q,"Energie !")
 
     def achete(self, Q):
         try:
+            Q=math.fabs(Q) #on travaille avec la valeur absolue de Q car on sait pertinament que si on achète alors Q<0
             print(self.name, "essaie d'avoir de l'energie gratuite...")
-            don = int(HomesQueue.get(True, 2))
+            don = int(self.HomesQueue.get(True, 2).decode()) #Reste bloqué pendant 2 secondes pour essayer d'avoir de l'énergie gratuite
 
-            if don > -Q:
-                print(self.name, "prend", don, "Energie et remet", don + Q, "Energie dans la queue.")
-                self.donne(don+Q)
-            elif don < -Q:
-                print(self.name, "prend", don, "Energie, mais ça ne suffit pas ! Il lui manque", Q + don, "Energie.")
-                self.achete(Q+don)
+            if don > Q:
+                print(self.name, "prend", don, "Energie et remet", don - Q, "Energie dans la queue.")
+                self.donne(don-Q)
+            elif don < Q:
+                print(self.name, "prend", don, "Energie, mais ça ne suffit pas ! Il lui manque", Q - don, "Energie.")
+                self.achete(-Q+don)
             else:
-                print(self.name, "prend", don, "Energie dans la file ! Merci <3")
+                print(self.name, "prend", don , "Energie dans la file ! Merci <3")
 
         except Exception as e:
             print(e)
             print("No givers !")
+            self.GeneralQueue.put(str(Q).encode())
             print(self.name, "achète au market", Q, "Energie !")
 
     def giver(self, Q):
