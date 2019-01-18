@@ -24,6 +24,20 @@ def handler(sig, frame):
         Prix = 2 * Prix
 
 
+def GestionsHandler(Q):
+    TransOfDay.append(int(Q))
+
+
+def listener():
+    print("Starting Thread :", threading.current_thread().name)
+    while(True):
+        Q = GeneralQueue.get()
+        print("hi : ", Q.decode())
+        gestion = threading.Thread(target=GestionsHandler, args=(Q.decode()))
+        gestion.start()
+        gestion.join()
+
+
 def afficheQueue(maFile):
 
     copy = []
@@ -38,6 +52,7 @@ def afficheQueue(maFile):
     for k in range(len(copy)):
         maFile.put(copy[k])
     print(" |\n-------------------------------------------------")
+
 
 class Home(Process):
 
@@ -211,31 +226,37 @@ if __name__ == "__main__":
     GeneralQueue = Queue() #File de messages pour les achats/ventes
     WeatherTab = Array('i', range(2))
     iteration= Value('i', 1) #iteration est implémenté à chaque fois que meteo est lancé. Il intervient dans le calcul de la température
+    TransOfDay=list() #permettra de calculer le coefficient gamma du prix
+
 
     # Pour la synchro :
     Flag = Value('i', 0)
 
     #initialisation
     WeatherTab[0]=21
+    Ptmoins1 = 0.145 #prix au temps t moins1
+    somme=0 #sera utile par la suite pour calculer la somme des transactions de la journée
 
     maison1 = Home("maison1", HomesQueue, GeneralQueue)
     maison2 = Home("maison2", HomesQueue, GeneralQueue)
     maison3 = Home("maison3", HomesQueue, GeneralQueue)
     weather = Meteo(WeatherTab, iteration, Flag, "Meteo")
     ext = External()
+    ListeningThread = threading.Thread(target=listener, args=())
 
     maison1.start()
     maison2.start()
     maison3.start()
     weather.start()
     ext.start()
+    ListeningThread.start()
 
     global ExtPID       # Récupération du PID de external.
     ExtPID = ext.pid
 
     time.sleep(1)
 
-    for i in range(0, 4):
+    for i in range(0, 5):
         print("")
         print("Début du jour ", i, "---------------------------------------------------")
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
@@ -244,10 +265,24 @@ if __name__ == "__main__":
         Flag.value = 0
         time.sleep(5)   # Pendant ce temps on veut être sûrs que tons les threads ont fini.
         afficheQueue(HomesQueue)
-        print(Prix)
+
+        #Calcul du prix
+
+        #calcul la somme de l'ensemble des transactions de la journée
+        for j in range(len(TransOfDay)):
+            somme=somme+TransOfDay[j]
+        #le coefficient gamma est modifiée en fonction de ce qui a été vendu ou acheté au market. Plus on a acheté, plus le prix monte
+        gamma = 1.0-(compteur/100)
+        #prix actuel
+        Pt = gamma*Ptmoins1
+        print("Le prix actuel est :", Pt)
+
+        Ptmoins1=Pt
+        TransOfDay=[] #on vide TransOfDay
 
 
     maison1.join()
     maison2.join()
     maison3.join()
     weather.join()
+    ListeningThread.join()

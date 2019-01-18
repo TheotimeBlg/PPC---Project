@@ -3,7 +3,7 @@ import threading
 import time
 
 
-def handler(Q):
+def GestionsHandler(Q):
     TransOfDay.append(int(Q))
 
 
@@ -12,7 +12,7 @@ def listener():
     while(True):
         Q = TransactionsMarket.get()
         print("hi : ", Q.decode())
-        gestion = threading.Thread(target=handler, args=(Q.decode()))
+        gestion = threading.Thread(target=GestionsHandler, args=(Q.decode()))
         gestion.start()
         gestion.join()
         print("hola hola")
