@@ -1,12 +1,11 @@
 import random
-import random
 import time
 import math
 from multiprocessing import Process, Queue, Array, Value
 import threading
 import os
 import signal
-
+import matplotlib.pyplot as plt
 
 def GestionsHandler(Q):
     #print("Starting Thread :", threading.current_thread().name)
@@ -203,6 +202,7 @@ class External(Process):
 if __name__ == "__main__":
     maFile = Queue()
     global Prix
+    tableauPrix = []
 
     ExternalValues = [0, 0]
 
@@ -258,9 +258,12 @@ if __name__ == "__main__":
     global ExtPID       # Récupération du PID de external.
     ExtPID = ext.pid
 
+    plt.ylabel('Prix en euros par kWh')
+    plt.xlabel('temps en jours')
+
     time.sleep(1)
 
-    for i in range(0, 5):
+    for i in range(0, 30):
         print("")
         print("Début du jour ", i, "---------------------------------------------------")
         print("La température est de", WeatherTab[0], "degrés celcius", "et il fait le temps", WeatherTab[1], "\n")
@@ -273,7 +276,8 @@ if __name__ == "__main__":
         afficheQueue(HomesQueue)
         afficheQueue(GeneralQueue)
 
-        #Calcul du prix
+
+        #Calcul du prix -------------------------------------------------------------------------------------------------------------
 
         #calcul la somme de l'ensemble des transactions de la journée
         for j in range(len(TransOfDay)):
@@ -294,12 +298,19 @@ if __name__ == "__main__":
         Pt = math.fabs(0.99*Ptmoins1 - 0.001*f1 + 0.002*f2 + ExternalValues[0]*ExternalValues[1])
         print("Le prix actuel est :", Pt)
 
+        tableauPrix.append(Pt)
+
+        plt.plot(tableauPrix)
+        plt.scatter(i, tableauPrix[i])
+        plt.pause(0.5)
+
         Ptmoins1=Pt
         TransOfDay=[] #on vide TransOfDay
 
-
+    plt.show()
     maison1.join()
     maison2.join()
     maison3.join()
     weather.join()
     ListeningThread.join()
+
